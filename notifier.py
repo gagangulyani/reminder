@@ -1,22 +1,25 @@
-from subprocess import check_output
+from subprocess import run
 
-APP_NAME = "Reminder"
+
 COMMAND = "notify-send"
 
 
-def send_notification(message="Blink", time=5000):
+def send_notification(app_name="Reminder 🐍", message="Blink", time=5000):
     attrs = {
-        "a": APP_NAME,
+        "a": app_name,
         "t": time,
         "u": "normal"
     }
 
+    format_quotes = "-{0} \"{1}\""
+    format_without_quotes = "-{0} {1}"
+
     final_command = " ".join(
-        (f"-{attr} {val}" for attr, val in attrs.items()))
+        (format_quotes.format(attr, val) if type(val) != int else format_without_quotes.format(attr, val) for attr, val in attrs.items()))
 
     final_command = f"{COMMAND} {final_command} \"{message}\""
-
-    print(check_output(final_command, shell=True))
+    print(final_command)
+    run(final_command, shell=True, check=True)
 
 
 if __name__ == "__main__":
