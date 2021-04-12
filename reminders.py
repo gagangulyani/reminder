@@ -19,19 +19,19 @@ class Reminder:
                           message=self.message, time=self.life)
 
     def __repr__(self):
-        return(f"Reminder(title = \"{self.title}\" "
-               f", message = \"{self.message}\" "
+        return(f"Reminder(title = {self.title!a} "
+               f", message = {self.message!a} "
                f", time = {self.time} "
                f", life = {self.life})"
                )
 
-    def __str__(self):
-        return (
-            f"Title = \"{self.title}\"\n"
-            f"Message = \"{self.message}\"\n"
-            f"Time = {self.time}\n"
-            f"Life = {self.life}\n"
-        )
+    def to_dict(self):
+        return {
+            "title": self.title,
+            "message": self.message,
+            "time": str(self.time),
+            "life": f"{str(self.life / 1000)}s"
+        }
 
     @validate_type
     def __lt__(self, other_reminder):

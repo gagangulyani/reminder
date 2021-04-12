@@ -1,7 +1,7 @@
 from reminders import Reminder
 from os import getpid
 from heapq import heapify, heappush, heappop, heappushpop
-from string import Template
+from terminal_output import display_table
 
 
 class App:
@@ -33,35 +33,11 @@ class App:
         print("🔽 Current Reminders (from high to low priority) 🔽\n")
         column_names = ['Priority', 'Title', 'Message', 'Time', 'Life']
 
-        template = (
-            "{priority:-^10}{title:-^14}"
-            "{message:-^15}{time:-^10}{life:-^10}")
+        # print(terminal_size)
+        ratios = [2, 2, 5, 2, 1]
 
-        header = template.format(**(
-            {k.lower(): val for k, val in zip(column_names, column_names)}
-        ))
-
-        # Header
-        print("=" * len(header))
-
-        print(header)
-
-        print("=" * len(header))
-
-        print()
-
-        template = template.replace("-", " ")
-
-        for i, reminder in enumerate(list(self.reminders)):
-            print(template.format(
-                priority=i + 1,
-                title=reminder.title,
-                message=reminder.message,
-                time=str(reminder.time),
-                life=reminder.life
-            ))
-
-        print("=" * len(header))
+        display_table(rows=list(self.reminders),
+                      header=column_names, ratios=ratios)
 
 
 if __name__ == "__main__":
@@ -69,7 +45,7 @@ if __name__ == "__main__":
 
     for _ in range(11):
         app.add_reminder(Reminder(
-            message="Hello, World!" f"{_}",
+            message="Look away from screen, and blink 10 times!" f"{_}",
             time=60 * (_ + 1)
         ))
 
