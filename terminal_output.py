@@ -1,13 +1,30 @@
 from os import get_terminal_size
-from math import ceil
+from math import floor
 from textwrap import wrap
 
 
+def calculate_ratios(terminal_size, rows, header,
+                     ratios):
+
+    ratios = [floor(terminal_size * (ratio/sum(ratios))) for ratio in ratios]
+    return [ratio for ratio in ratios]
+
+
+def max_depth(list_obj):
+    max_ = 0
+    for item in list_obj:
+        try:
+            max_ = max(len(item), max_)
+        except TypeError:
+            continue
+    return max_
+
+
 def display_table(rows, header, ratios):
+    
     terminal_size = get_terminal_size().columns
-    remainder = terminal_size // sum(ratios)
-    ratios = [ceil(ratio) * remainder for ratio in ratios]
-    max_message_len = ratios[2]
+    ratios = calculate_ratios(terminal_size, rows, header, ratios)
+
     template = ""
 
     for ratio in ratios:
@@ -16,28 +33,61 @@ def display_table(rows, header, ratios):
     header = template.format(*header)
 
     # Header
-    print("=" * len(header))
-
+    print("=" * terminal_size)
     print(header)
-
-    print("=" * len(header))
+    print("=" * terminal_size)
 
     print()
+
     template = str(template).replace("-", " ")
 
-    for i, reminder in enumerate(rows):
-        temp = list(({"priority": i + 1} | reminder.to_dict()).values())
-        temp_message = []
-        if len(temp[2]) > max_message_len:
-            temp[2], *temp_message = wrap(temp[2], max_message_len)
-            # print("Message too big!")
+    for reminder in rows:
+        to_wrap = []
+        temp = list(reminder.to_str_dict().values())
+        # print("[temp]: ", temp)
+        for i, item in enumerate(temp):
+
+            temp_str = []
+
+            if len(item) > ratios[i]:
+                # print(f"Item: {item}\nLen: {len(item)}")
+                # print(f"Max: {ratios[i]}\n")
+                temp[i], *temp_str = wrap(item, ratios[i])
+                # print("TEMP:", temp[i])
+                # print("Message too big!")
+                to_wrap.append(temp_str)
+            else:
+                to_wrap.append(0)
 
         print(template.format(
             *temp
         ))
-        for sentence in temp_message:
+
+        print_leftover = []
+
+        depth = max_depth(to_wrap)
+
+        for temp_string in to_wrap:
+            if temp_string:
+                while len(temp_string) < depth:
+                    temp_string.append("")
+                print_leftover.append(temp_string)
+            else:
+                print_leftover.append([""]*depth)
+
+        # print("\n[Leftover]:", print_leftover)
+        for column in range(depth):
+            to_print = []
+            for row in range(len(to_wrap)):
+                to_print.append(print_leftover[row][column])
+            # print("TO PRINT", to_print)
+
             print(template.format(
-                *["", "", sentence, "", ""]
+                *to_print
             ))
-    #         print("Printed stuff")
-    print("=" * len(header))
+        # return
+        print()
+    # print("=" * terminal_size)
+    # print("Terminal Width:", terminal_size)
+    # print("Ratios:", ratios)
+    # print("Sum Ratios:", sum(ratios))

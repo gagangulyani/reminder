@@ -29,9 +29,15 @@ class Reminder:
         return {
             "title": self.title,
             "message": self.message,
-            "time": str(self.time),
-            "life": f"{str(self.life / 1000)}s"
+            "time": self.time,
+            "life": self.life / 1000
         }
+
+    def to_str_dict(self):
+        temp = self.to_dict()
+        temp["time"] = str(self.time)
+        temp["life"] = f"{temp['life']}s"
+        return temp
 
     @validate_type
     def __lt__(self, other_reminder):

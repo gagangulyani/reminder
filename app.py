@@ -30,12 +30,14 @@ class App:
                         life=life, time=time)
 
     def display_reminders(self):
-        print("🔽 Current Reminders (from high to low priority) 🔽\n")
-        column_names = ['Priority', 'Title', 'Message', 'Time', 'Life']
+        if len(self.reminders) == 0:
+            print("⚠ No Reminders Found❗")
+            return
+        print("🔽 Current Reminders (from HIGH to LOW Priority) 🔽\n")
+        column_names = ['Title', 'Message', 'Time', 'Life']
 
         # print(terminal_size)
-        ratios = [2, 2, 5, 2, 1]
-
+        ratios = [20, 50, 15, 15]
         display_table(rows=list(self.reminders),
                       header=column_names, ratios=ratios)
 
@@ -45,8 +47,10 @@ if __name__ == "__main__":
 
     for _ in range(11):
         app.add_reminder(Reminder(
-            message="Look away from screen, and blink 10 times!" f"{_}",
-            time=60 * (_ + 1)
+            message=("Look away from screen, and "
+            "blink 10 times and don't forget to breathe!! "
+            f"{_}"),
+            time=60 * (_ + 1), 
         ))
 
     app.display_reminders()
