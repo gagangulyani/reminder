@@ -47,6 +47,10 @@ class Reminder:
 
     @staticmethod
     def to_time(time_str):
+
+        if time_str == None:
+            return time_str
+            
         #  For Life Attr
         if time_str.endswith("s"):
             return int(time_str.removesuffix("s"))
@@ -91,7 +95,7 @@ class Reminder:
             message=dict_.get("message"),
             time=Reminder.to_time(dict_.get("time")),
             life=Reminder.to_time(dict_.get("life")),
-            datetime=Reminder.to_time(dict_.get("datetime")),
+            datetime=Reminder.to_time(dict_.get("datetime", None)),
             is_enabled=Reminder.to_bool(dict_.get("is_enabled"))
         )
 
