@@ -1,19 +1,22 @@
 from notifier import send_notification
 from datetime import timedelta, datetime
 from custom_decorators import validate_type
-
+from uuid import uuid4
 
 APP_NAME = "Reminder 🐍"
 
 
 class Reminder:
-    def __init__(self, message, time, title=None, life=5, datetime=None, is_enabled=False):
+    def __init__(self, message, time, title=None, life=5, datetime=None,
+                 is_enabled=False, repeat=False, id=None):
         self.title = APP_NAME if title is None else title
         self.message = message
         self.time = timedelta(seconds=time)
         self.datetime = datetime
         self.life = life
         self.is_enabled = is_enabled
+        self.repeat = repeat
+        self.id = str(uuid4())[::5] if id == None else id
 
     def add_ctime(self):
         self.datetime = (datetime.now() + self.time).replace(microsecond=0)
@@ -27,30 +30,36 @@ class Reminder:
     def __repr__(self):
         return(f"Reminder(title={self.title!a}"
                f", message={self.message!a}"
-               f", time={self.time}"
-               f", datetime={self.datetime}"
-               f", life={self.life})"
+               f", time={self.time.__repr__()}"
+               f", datetime={self.datetime.__repr__()}"
+               f", life={self.life.__repr__()}"
                f", is_enabled={self.is_enabled}"
+               f", repeat={self.repeat})"
+               f", id={self.id!a})"
                )
 
-    def to_dict(self, to_str=False):
+    def to_dict(self, to_str=False, ignore_datetime=False):
         temp = {
             "title": self.title,
             "message": self.message,
             "time": self.time,
             "life": self.life,
             "datetime": self.datetime,
-            "is_enabled": self.is_enabled
+            "is_enabled": self.is_enabled,
+            "repeat": self.repeat,
+            "id": self.id
         }
-
+        if ignore_datetime:
+            temp.pop("datetime")
+            
         return {key: str(value) for key, value in temp.items()} if to_str else temp
 
     @staticmethod
     def to_time(time_str):
 
-        if time_str == None:
-            return time_str
-            
+        if time_str in [None, "None"]:
+            return None
+
         #  For Life Attr
         if time_str.endswith("s"):
             return int(time_str.removesuffix("s"))
@@ -67,7 +76,7 @@ class Reminder:
             days = 0
 
             if "day" in time_str:
-                days, temp, time_str = time_str.split()
+                days, _, time_str = time_str.split()
 
             time_str = time_str.split(":")
 
@@ -91,12 +100,14 @@ class Reminder:
     @staticmethod
     def from_dict(dict_):
         return Reminder(
-            title=dict_.get("title"),
+            title=dict_.get("title", APP_NAME),
             message=dict_.get("message"),
             time=Reminder.to_time(dict_.get("time")),
             life=Reminder.to_time(dict_.get("life")),
             datetime=Reminder.to_time(dict_.get("datetime", None)),
-            is_enabled=Reminder.to_bool(dict_.get("is_enabled"))
+            is_enabled=Reminder.to_bool(dict_.get("is_enabled")),
+            repeat=Reminder.to_bool(dict_.get("repeat", "False")),
+            id=dict_.get("id", None)
         )
 
     @validate_type

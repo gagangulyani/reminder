@@ -20,9 +20,13 @@ def max_depth(list_obj):
     return max_
 
 
-def display_table(rows, header, ratios):
+def display_table(rows, header, ratios, margin=5):
     
     terminal_size = get_terminal_size().columns
+    diff = 100 - sum(ratios)
+    
+    ratios += [diff/len(header) for _ in range(len(ratios), len(header))]
+
     ratios = calculate_ratios(terminal_size, rows, header, ratios)
 
     template = "".join(["{" f":-^{ratio}" "}" for ratio in ratios])
