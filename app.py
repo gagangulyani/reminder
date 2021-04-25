@@ -1,10 +1,16 @@
 from reminders import Reminder
 from os import getpid
+from os.path import exists
 from heapq import heapify, heappush, heappop, heapreplace
 from terminal_output import display_table
 from datetime import datetime
 from time import sleep
 from pprint import pprint
+from json import dump, load
+
+JSON_NAME = "Saved-Reminders.json"
+CURRENT_STATE_NAME = "current_state.json"
+VERBOSE = False
 
 
 class App:
@@ -23,11 +29,11 @@ class App:
                       "[default = \"Reminder 🐍\"]\n▶ ")
         message = input("What is the Message for Reminder?\n▶ ")
         time = int(input("How much time should it take (in minutes)?\n▶ "))
-        life = int(input("For how long it should stay on screen? "
-                         "[default = \"5000 (ms)\"]\n▶ "))
+        life = input("For how long it should stay on screen? "
+                     "[default = \"5 (seconds)\"]\n▶ ")
 
         title = None if title == "" else title
-        life = 5000 if life == "" else life
+        life = 5 if life == "" else int(life)
 
         time = int(time * 60)  # Convert Minutes into Seconds
 
@@ -39,66 +45,83 @@ class App:
             print("⚠ No Reminders Found❗")
             return
         print("🔽 Current Reminders (from HIGH to LOW Priority) 🔽\n")
-        column_names = ['Title', 'Message', 'Time', 'Life']
+        column_names = [key.capitalize()
+                        for key in self.reminders[0].to_dict(to_str=True)]
 
         # print(terminal_size)
-        ratios = [20, 50, 15, 15]
+        ratios = [20, 37, 15, 10, 20, 13]
         display_table(rows=sorted(self.reminders),
                       header=column_names, ratios=ratios)
 
-    def start(self):
-        self.reminders = [reminder.add_ctime() for reminder in self.reminders]
+    def start(self, all=False, resume=False):
+
+        if len(self.reminders) == 0 or resume == True:
+            self.load_reminders(resume)
+
+        if not all:
+            self.reminders = [reminder.add_ctime()
+                              for reminder in self.reminders if reminder.is_enabled]
+        else:
+            self.reminders = [reminder.add_ctime()
+                              for reminder in self.reminders]
+
         heapify(self.reminders)
-        # TODO: Make this function work!
-        # previous = None
-        # while len(self.reminders) != 0:
-        #     current_reminder = self.reminders[0]
-        #     if hasattr(previous, "datetime") and previous.datetime == current_reminder.datetime - previous.time:
-        #         self.display_reminders()
-        #     current_reminder.notify()
-        #     previous = current_reminder
-        #     heapreplace(self.reminders, current_reminder.add_ctime())
-        #     sleep(current_reminder.time.seconds)
+
+        while len(self.reminders) != 0:
+            if self.reminders[0].datetime == datetime.now().replace(microsecond=0):
+                self.reminders[0].notify(verbose=VERBOSE)
+                heapreplace(self.reminders, self.reminders[0].add_ctime())
+            else:
+                self.save_reminders(current_state=True)
+                sleep(0.5)
+
+    def to_dict(self, to_str=False):
+        return [reminder.to_dict(to_str=to_str) for reminder in self.reminders]
+
+    def save_reminders(self, current_state=False):
+        filename = JSON_NAME if current_state is False else CURRENT_STATE_NAME
+        dump(self.to_dict(to_str=True), open(
+            filename, "w"), indent=4)
+
+    def load_reminders(self, resume=False):
+        filename = JSON_NAME if resume == False else CURRENT_STATE_NAME
+        if exists(filename):
+            self.reminders = load(open(filename, "r"),
+                                  object_hook=Reminder.from_dict)
+        else:
+            print("Error! Saved Reminders Not Found!")
+            self.reminders = []
+
 
 if __name__ == "__main__":
     app = App()
 
-    reminders = [
-        Reminder(
-            message="Look Away for 5 Seconds",
-            time=5
-        ),
-         Reminder(
-            message="Look Away for 15 Seconds",
-            time=15
-        ),
-        Reminder(
-            message="Look Away for 5 more Seconds!",
-            time=5
-        ),
-        Reminder(
-            message="Look Away for 10 Seconds",
-            time=10
-        ),
-       
-    ]
+    set_reminder = False
 
-    for reminder in reminders:
-        app.add_reminder(reminder)
-    # for _ in range(11):
-    #     app.add_reminder(Reminder(
-    #         message=("Look away from screen, and "
-    #                  "blink 10 times and don't forget to breathe!! "
-    #                  f"{_}"),
-    #         time=60 * (_ + 1),
-    #     ))
+    # Ignore Disabled Reminders
+    all = False
 
-    app.display_reminders()
+    #  for Testing
+    if set_reminder == True:
 
-    # print()
+        reminders = [
+            Reminder(
+                message="Look Away for 5 Seconds",
+                time=5
+            ),
+            Reminder(
+                message="Look Away for 5 more Seconds!",
+                time=5
+            ),
+            Reminder(
+                message="Look Away for 10 Seconds",
+                time=10
+            ),
+        ]
 
-    # for i in range(6):
-    #     print(f"Starting Reminder App in {5-i} Seconds...", end="\r")
-    #     sleep(1)
+        for reminder in reminders:
+            app.add_reminder(reminder)
 
-    app.start()
+        app.save_reminders()
+
+    app.start(all=all)

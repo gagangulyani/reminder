@@ -25,10 +25,7 @@ def display_table(rows, header, ratios):
     terminal_size = get_terminal_size().columns
     ratios = calculate_ratios(terminal_size, rows, header, ratios)
 
-    template = ""
-
-    for ratio in ratios:
-        template += "{" f":-^{ratio}" "}"
+    template = "".join(["{" f":-^{ratio}" "}" for ratio in ratios])
 
     header = template.format(*header)
 
@@ -43,18 +40,11 @@ def display_table(rows, header, ratios):
 
     for reminder in rows:
         to_wrap = []
-        temp = list(reminder.to_str_dict().values())
-        # print("[temp]: ", temp)
+        temp = list(reminder.to_dict(to_str=True).values())
         for i, item in enumerate(temp):
-
             temp_str = []
-
             if len(item) > ratios[i]:
-                # print(f"Item: {item}\nLen: {len(item)}")
-                # print(f"Max: {ratios[i]}\n")
                 temp[i], *temp_str = wrap(item, ratios[i])
-                # print("TEMP:", temp[i])
-                # print("Message too big!")
                 to_wrap.append(temp_str)
             else:
                 to_wrap.append(0)
@@ -75,19 +65,11 @@ def display_table(rows, header, ratios):
             else:
                 print_leftover.append([""]*depth)
 
-        # print("\n[Leftover]:", print_leftover)
         for column in range(depth):
             to_print = []
             for row in range(len(to_wrap)):
                 to_print.append(print_leftover[row][column])
-            # print("TO PRINT", to_print)
-
             print(template.format(
                 *to_print
             ))
-        # return
         print()
-    # print("=" * terminal_size)
-    # print("Terminal Width:", terminal_size)
-    # print("Ratios:", ratios)
-    # print("Sum Ratios:", sum(ratios))

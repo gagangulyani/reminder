@@ -7,20 +7,22 @@ APP_NAME = "Reminder 🐍"
 
 
 class Reminder:
-    def __init__(self, message, time, title=None, life=5000):
+    def __init__(self, message, time, title=None, life=5, datetime=None, is_enabled=False):
         self.title = APP_NAME if title is None else title
         self.message = message
         self.time = timedelta(seconds=time)
-        self.datetime = None
+        self.datetime = datetime
         self.life = life
+        self.is_enabled = is_enabled
 
     def add_ctime(self):
         self.datetime = (datetime.now() + self.time).replace(microsecond=0)
         return self
 
-    def notify(self):
+    def notify(self, verbose=False):
         send_notification(app_name=self.title,
-                          message=self.message, time=self.life)
+                          message=self.message, time=self.life * 1000,
+                          verbose=verbose)
 
     def __repr__(self):
         return(f"Reminder(title={self.title!a}"
@@ -28,23 +30,70 @@ class Reminder:
                f", time={self.time}"
                f", datetime={self.datetime}"
                f", life={self.life})"
+               f", is_enabled={self.is_enabled}"
                )
 
-    def to_dict(self):
-        return {
+    def to_dict(self, to_str=False):
+        temp = {
             "title": self.title,
             "message": self.message,
             "time": self.time,
-            "life": self.life / 1000,
-            "datetime": self.datetime
+            "life": self.life,
+            "datetime": self.datetime,
+            "is_enabled": self.is_enabled
         }
 
-    def to_str_dict(self):
-        temp = self.to_dict()
-        temp["time"] = str(self.time)
-        temp["life"] = f"{temp['life']}s"
-        temp.pop("datetime")
-        return temp
+        return {key: str(value) for key, value in temp.items()} if to_str else temp
+
+    @staticmethod
+    def to_time(time_str):
+        #  For Life Attr
+        if time_str.endswith("s"):
+            return int(time_str.removesuffix("s"))
+
+        if time_str.endswith("m"):
+            return int(time_str.removesuffix("m")) * 60
+
+        if time_str.isdigit():
+            return int(time_str)
+
+        # For Time Attr
+        if "-" not in time_str:
+
+            days = 0
+
+            if "day" in time_str:
+                days, temp, time_str = time_str.split()
+
+            time_str = time_str.split(":")
+
+            hours, minutes, seconds = [
+                int(i) for i in time_str]
+
+            days = int(days) * 24 * 60 * 60
+            hours *= 60 * 60
+            minutes *= 60
+
+            seconds += days+hours+minutes
+            return seconds
+
+        # For Date Attr
+        return datetime.fromisoformat(time_str)
+
+    @staticmethod
+    def to_bool(bool_str):
+        return True if bool_str.lower() == "true" else False
+
+    @staticmethod
+    def from_dict(dict_):
+        return Reminder(
+            title=dict_.get("title"),
+            message=dict_.get("message"),
+            time=Reminder.to_time(dict_.get("time")),
+            life=Reminder.to_time(dict_.get("life")),
+            datetime=Reminder.to_time(dict_.get("datetime")),
+            is_enabled=Reminder.to_bool(dict_.get("is_enabled"))
+        )
 
     @validate_type
     def __lt__(self, other_reminder):
