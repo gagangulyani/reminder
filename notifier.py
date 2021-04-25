@@ -4,7 +4,7 @@ from subprocess import run
 COMMAND = "notify-send"
 
 
-def send_notification(app_name="Reminder 🐍", message="Blink", time=5000):
+def send_notification(app_name="Reminder 🐍", message="Blink", time=5000, verbose=False):
     attrs = {
         "a": app_name,
         "t": time,
@@ -18,9 +18,9 @@ def send_notification(app_name="Reminder 🐍", message="Blink", time=5000):
         (format_quotes.format(attr, val) if type(val) != int else format_without_quotes.format(attr, val) for attr, val in attrs.items()))
 
     final_command = f"{COMMAND} {final_command} \"{message}\""
-    print(final_command)
     run(final_command, shell=True, check=True)
-
+    if verbose:
+        print(final_command)
 
 if __name__ == "__main__":
     send_notification()
