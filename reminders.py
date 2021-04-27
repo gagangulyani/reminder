@@ -1,5 +1,5 @@
 from notifier import send_notification
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime as dt
 from custom_decorators import validate_type
 from uuid import uuid4
 
@@ -12,14 +12,14 @@ class Reminder:
         self.title = APP_NAME if title is None else title
         self.message = message
         self.time = timedelta(seconds=time)
-        self.datetime = datetime
+        self.datetime = datetime if datetime is not None else dt.now().replace(microsecond=0)
         self.life = life
         self.is_enabled = is_enabled
         self.repeat = repeat
         self.id = str(uuid4())[::5] if id == None else id
 
     def add_ctime(self):
-        self.datetime = (datetime.now() + self.time).replace(microsecond=0)
+        self.datetime = (dt.now() + self.time).replace(microsecond=0)
         return self
 
     def notify(self, verbose=False):
@@ -51,11 +51,14 @@ class Reminder:
         }
         if ignore_datetime:
             temp.pop("datetime")
-            
+
         return {key: str(value) for key, value in temp.items()} if to_str else temp
 
     @staticmethod
     def to_time(time_str):
+
+        if type(time_str) == int:
+            return time_str
 
         if time_str in [None, "None"]:
             return None
@@ -91,7 +94,7 @@ class Reminder:
             return seconds
 
         # For Date Attr
-        return datetime.fromisoformat(time_str)
+        return dt.fromisoformat(time_str)
 
     @staticmethod
     def to_bool(bool_str):
@@ -112,39 +115,27 @@ class Reminder:
 
     @validate_type
     def __lt__(self, other_reminder):
-        if self.datetime != None:
-            return self.datetime < other_reminder.datetime
-        return self.time < other_reminder.time
+        return self.datetime < other_reminder.datetime
 
     @validate_type
     def __gt__(self, other_reminder):
-        if self.datetime != None:
-            return self.datetime > other_reminder.datetime
-        return self.time > other_reminder.time
+        return self.datetime > other_reminder.datetime
 
     @validate_type
     def __le__(self, other_reminder):
-        if self.datetime != None:
-            return self.datetime <= other_reminder.datetime
-        return self.time <= other_reminder.time
+        return self.datetime <= other_reminder.datetime
 
     @validate_type
     def __ge__(self, other_reminder):
-        if self.datetime != None:
-            return self.datetime >= other_reminder.datetime
-        return self.time >= other_reminder.time
+        return self.datetime >= other_reminder.datetime
 
     @validate_type
     def __eq__(self, other_reminder):
-        if self.datetime != None:
-            return self.datetime == other_reminder.datetime
-        return self.time == other_reminder.time
+        return self.to_dict() == other_reminder.to_dict()
 
     @validate_type
     def __ne__(self, other_reminder):
-        if self.datetime != None:
-            return self.datetime != other_reminder.datetime
-        return self.time != other_reminder.time
+        return self.to_dict() != other_reminder.to_dict()
 
 
 if __name__ == "__main__":
