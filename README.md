@@ -17,7 +17,7 @@ I wanted to solve my own problem of reminding myself to do basic stuff I need to
 - Execute the script using the following command while in the current directory (of the Reminder App)
 
 ```bash
-nohub python3 app.py &
+nohup python3 app.py &
 ```
 
 It will execute the script in the Background.
