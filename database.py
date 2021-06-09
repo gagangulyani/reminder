@@ -41,7 +41,7 @@ class Database:
                 raise e
 
     @staticmethod
-    def add_record(table_name, record):
+    def insert_record(table_name, record):
         values = tuple(record.to_dict(to_str=True).values())
         query_string = f"INSERT INTO {table_name} VALUES ({', '.join('?' * len(values))})"
         Database.CURSOR.execute(query_string, values)
@@ -74,15 +74,15 @@ if __name__ == "__main__":
     record = Reminder("Hello", 15)
     record2 = Reminder("Hello", 15)
 
-    # Force Creating the Table (Drops existing Table)
-    force = True
+    # # Force Creating the Table (Drops existing Table)
+    # force = True
 
-    # Create Table
-    Database.create_table(table_name=table_name, record=record, force=True)
+    # # Create Table
+    # Database.create_table(table_name=table_name, record=record, force=True)
 
-    # Insert Record in Table
-    Database.add_record(table_name=table_name, record=record)
-    Database.add_record(table_name=table_name, record=record2)
+    # # Insert Record in Table
+    # Database.insert_record(table_name=table_name, record=record)
+    # Database.insert_record(table_name=table_name, record=record2)
 
     print(Database.get_all_records(table_name))
 
