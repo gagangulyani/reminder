@@ -1,4 +1,5 @@
 from reminders import Reminder
+from notifier import send_notification
 from os import getpid
 from os.path import exists
 from heapq import heapify, heappush, heappop, heapreplace
@@ -76,8 +77,8 @@ class App:
 
         self.generate_reminders(all, resume)
 
-        app.display_reminders()
-
+        # app.display_reminders()
+        send_notification(app_name="Reminder 🐍", message="REMINDER APP STARTED!", time=10000)
         while len(self.reminders) != 0:
             if self.reminders[0].datetime == datetime.now().replace(microsecond=0):
                 self.reminders[0].notify(verbose=VERBOSE)
