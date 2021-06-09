@@ -1,0 +1,29 @@
+[
+    {
+        "title": "Reminder \ud83d\udc0d",
+        "message": "Look Away from the screen and Blink 10 Times!",
+        "time": "0:40:00",
+        "life": "10",
+        "is_enabled": "True",
+        "repeat": "True",
+        "id": "6895ea17"
+    },
+    {
+        "title": "Reminder \ud83d\udc0d",
+        "message": "Use Eye Drops and Freshen up your eyes!",
+        "time": "2:00:00",
+        "life": "10",
+        "is_enabled": "True",
+        "repeat": "True",
+        "id": "72975aa8"
+    },
+    {
+        "title": "Reminder \ud83d\udc0d",
+        "message": "Get Up from your Fucking chair and Move your Legs!",
+        "time": "1:00:00",
+        "life": "10",
+        "is_enabled": "True",
+        "repeat": "True",
+        "id": "15171a0e"
+    }
+]
