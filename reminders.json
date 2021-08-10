@@ -1,0 +1,26 @@
+[
+  {
+    "message": "Look away from the screen and Blink 10 times",
+    "repeat": true,
+    "gap": "00:40:15",
+    "enabled": true
+  },
+  {
+    "message": "Did you read your book today?",
+    "repeat": true,
+    "time": "11:00 PM",
+    "enabled": true
+  },
+  {
+    "message": "Did you learn Math today?",
+    "repeat": true,
+    "time": "11:00 AM",
+    "enabled": true
+  },
+  {
+    "message": "Take a BREAK! Stretch your legs and take a walk for 10 minutes!",
+    "repeat": true,
+    "gap": "01:40",
+    "enabled": true
+  }
+]
