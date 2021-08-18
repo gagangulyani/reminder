@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from time import sleep
 from json import load, dump
 from sys import exit as sys_exit
-from typing import Any, Callable
 from pathlib import Path
 from helpers import (get_path_to_reminders, ask, notify)
 
