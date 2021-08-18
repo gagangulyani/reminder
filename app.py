@@ -1,33 +1,17 @@
-from subprocess import run
 from datetime import datetime, timedelta
 from time import sleep
-from types import FunctionType
-from json import load
+from json import load, dump
+from sys import exit as sys_exit
+from typing import Any, Callable
 from pathlib import Path
-from sys import argv, exit as sys_exit
-from typing import Union, Any, Callable
+from helpers import (get_path_to_reminders, ask, notify)
 
-REMINDER_FILE_PATH: Path = Path(__file__).parent / "reminders.json"
-
-
-def is_finished(task: str) -> bool:
-    """This function returns the return value of zenity
-    command's question that user responds to
-
-    Args:
-        task (str): task that needs to be completed
-
-    Returns:
-        bool: True if User Selected Yes (Task has been completed) else False
-    """
-    command = f"zenity --question --title \"Reminder\" --text \"{task}\" 2>/dev/null --no-wrap"
-    output = run(command, shell=True)
-    return not bool(output.returncode)
+REMINDER_FILE_PATH: Path = get_path_to_reminders()
 
 
 def clean_dt(datetime_obj: datetime) -> datetime:
     """This function returns the stripped version of datetime object
-    with seconds and microseconds set to 0
+    with microseconds set to 0
 
     Args:
         datetime_obj (datetime): datetime object that needs to be stripped
@@ -36,48 +20,6 @@ def clean_dt(datetime_obj: datetime) -> datetime:
         datetime: stripped datetime object
     """
     return datetime_obj.replace(microsecond=0)
-
-
-def execute_at_time(custom_datetime: datetime, func: Callable, *args: list[Any], **kwargs: dict) -> bool:
-    """This function calls the given function at a specific time (matching current time with time in future)
-
-    Args:
-        custom_datetime (datetime): [description]
-        func (FunctionType): [description]
-
-    Returns:
-        bool: [description]
-    """
-    while True:
-        if clean_dt(datetime.now()) == clean_dt(custom_datetime):
-            return func(*args, **kwargs)
-        else:
-            sleep(1)
-
-
-def get_path_to_reminders() -> None:
-    """This function gets the path to reminders.json file consisting of reminders that need to be
-    reminded to the user at their respective time and updates the global REMINDER_FILE_PATH object.
-
-    Returns:
-        None
-    """
-    global REMINDER_FILE_PATH
-
-    if len(argv) not in [1, 2]:
-        print("[ERROR] Invalid Number of Command Line Arguments!")
-        sys_exit(1)
-
-    elif len(argv) == 1 and REMINDER_FILE_PATH.exists():
-        print("Reminders file found!")
-
-    elif len(argv) == 2 and Path(argv[1]).exists():
-        REMINDER_FILE_PATH = Path(argv[1])
-        print("Reminders file found!")
-
-    else:
-        print("[ERROR] Can't find the JSON file containing the reminders...")
-        sys_exit(2)
 
 
 def dict_to_reminder(reminder: dict) -> dict:
@@ -89,59 +31,161 @@ def dict_to_reminder(reminder: dict) -> dict:
     Returns:
         dict: consisting of reminder dictionary
     """
-    temp: Union[str, datetime]
-    if temp := reminder.get("gap", False):
-        if "00:" in temp:
-            if temp.count(":") == 2:
-                temp = datetime.strptime(temp.removeprefix("00:"), "%M:%S")
+    gap = reminder.get("gap", None)
+    time_ = reminder.get("time", None)
+
+    if gap == None and time_ == None:
+        print("[ERROR] Unable to find either of Gap or Time for the Reminder")
+        sys_exit(4)
+
+    if gap:
+        if "00:" in gap:
+            if gap.count(":") == 2:
+                gap = datetime.strptime(gap.removeprefix("00:"), "%M:%S")
 
             else:
-                temp = datetime.strptime(temp.removeprefix("00:"), "%M")
+                gap = datetime.strptime(gap.removeprefix("00:"), "%M")
 
-        elif temp.count(":") == 2:
-            temp = datetime.strptime(temp, "%I:%M:%S")
+        elif gap.count(":") == 2:
+            gap = datetime.strptime(gap, "%I:%M:%S")
 
         else:
-            temp = datetime.strptime(temp, "%I:%M")
+            gap = datetime.strptime(gap, "%I:%M")
 
-        reminder["gap"] = timedelta(hours=temp.hour,
-                                    minutes=temp.minute,
-                                    seconds=temp.second)
+        reminder["gap"] = timedelta(hours=gap.hour,
+                                    minutes=gap.minute,
+                                    seconds=gap.second)
 
-    elif temp := reminder.get("time", False):
-        temp = datetime.strptime(temp, "%H:%M %p")
-        reminder["time"] = datetime.now().replace(hour=temp.hour,
-                                                  minute=temp.minute,
-                                                  second=0,
-                                                  microsecond=0)
+        reminder["time"] = datetime.now() + reminder["gap"]
+        reminder["has_gap"] = True
+
+    elif time_:
+        try:
+            time_ = datetime.strptime(time_, "%I:%M:%S %p")
+        except ValueError:
+            time_ = datetime.strptime(time_, "%I:%M %p")
+
+        reminder["time"] = datetime.now().replace(hour=time_.hour,
+                                                  minute=time_.minute,
+                                                  second=time_.second)
+        reminder["has_gap"] = False
 
     return reminder
 
 
-def start_app() -> None:
-    """This function controls the reminders using defined functions in this module
-    for working with them and displaying them to the users periodically.
+def display_reminder(reminder: dict) -> bool:
+    """This function displays reminder and returns boolean value
+    indicating if reminder was successfully displayed.
+
+    Returns
+        bool: True, if reminder was successfully displayed, else False
+    """
+    time_: datetime = reminder["time"]
+    msg: str = reminder["message"]
+
+    if reminder.get("type") not in ["question", "notify"]:
+        print("[ERROR] Invalid Reminder Type!")
+        sys_exit(3)
+
+    if clean_dt(datetime.now()) == clean_dt(time_):
+        if reminder.get("type", None) == "question":
+            return ask(msg)
+        return notify(msg)
+
+    return False
+
+
+def get_reminders(raw=False) -> dict:
+    """This function returns reminders from the JSON file containing reminders
 
     Returns:
-        None: It doesn't return anything lol
+        dict: Reminders
     """
-
-    # TODO:
-    #   1. Display Reminders respective of their time
-    #   2. Update the JSON file for disabling the reminder if repeat is disabled
-
-    list_of_reminders: list[dict] = []
+    reminders: dict = {}
+    temp: dict
 
     with open(REMINDER_FILE_PATH, "r") as reminder_file:
-        reminders = load(reminder_file)
+        if raw:
+            return load(reminder_file)
 
-        for reminder in reminders:
-            list_of_reminders.append(dict_to_reminder(reminder))
+        for reminder in load(reminder_file):
+            temp = dict_to_reminder(reminder)
+            if temp.get("enabled", False):
+                add_reminder_to_dict(reminders, temp)
+            elif temp.get("enabled") == None:
+                print(f"[ERROR] a reminder has no attribute \"enabled\"!")
+                sys_exit(3)
 
-    print(list_of_reminders)
+        return reminders
+
+
+def update_reminder_file(updated_reminder: dict, toggle: bool = False) -> None:
+    """This function updates the reminder's "enabled" attribute used for enabling
+    and disabling it, in the JSON file
+
+    Args:
+        updated_reminder (dict): Reminder
+
+    Returns:
+         bool: True if reminder has been updated else False
+    """
+    reminders: dict = get_reminders(raw=True)
+    found: bool = False
+
+    for reminder in reminders:
+        if reminder["message"] == updated_reminder["message"]:
+            if toggle:
+                reminder["enabled"] = not updated_reminder["enabled"]
+            else:
+                reminder["enabled"] = updated_reminder["enabled"]
+            found = True
+
+    with open(REMINDER_FILE_PATH, "w") as reminder_file:
+        dump(reminders, reminder_file, indent=4)
+
+    if not found:
+        raise OSError("Reminder file not Found!")
+
+
+def add_reminder_to_dict(list_of_reminders: dict, reminder: dict) -> None:
+    """This function adds reminder dict into list_of_reminders dict with key as reminder's time
+
+    Args:
+        list_of_reminders (dict): Dict of Reminders
+        reminder (dict): dict containing info about the reminder
+    """
+    reminder["time"] = reminder["time"].replace(microsecond=0)
+
+    if reminder["time"] in list_of_reminders:
+        list_of_reminders[reminder["time"]].append(reminder)
+    else:
+        list_of_reminders[reminder["time"]] = [reminder]
+
+
+def start_app():
+    """This function controls the reminders using defined functions in this module
+    for working with them and displaying them to the users periodically.
+    """
+
+    list_of_reminders: dict = get_reminders()
+
+    while list_of_reminders:
+        ctime = clean_dt(datetime.now())
+        if list_of_reminders.get(ctime):
+            reminders = list_of_reminders.pop(ctime)
+            for reminder in reminders:
+                if display_reminder(reminder):
+                    if reminder["repeat"] and reminder["has_gap"]:
+                        reminder["time"] += reminder["gap"]
+                        add_reminder_to_dict(list_of_reminders, reminder)
+                    else:
+                        update_reminder_file(reminder, toggle=True)
+                else:
+                    add_reminder_to_dict(list_of_reminders, reminder)
+        sleep(0.5)
 
 
 if __name__ == "__main__":
     # print(execute_at_time(datetime.now() +
-    #                       timedelta(seconds=5), is_finished, "Does it Work?"))
+    #                       timedelta(seconds=5), ask, "Does it Work?"))
     start_app()
