@@ -7,37 +7,9 @@
         "type": "notify"
     },
     {
-        "message": "Look away from the screen and Blink 7 times",
-        "repeat": false,
-        "gap": "00:00:07",
-        "enabled": false,
-        "type": "notify"
-    },
-    {
-        "message": "Look away from the screen and Blink 10 times",
+        "message": "Look away from the screen and Keep Blinking for 1 MINUTE",
         "repeat": true,
-        "gap": "00:40:15",
-        "enabled": true,
-        "type": "notify"
-    },
-    {
-        "message": "Did you read your book today?",
-        "repeat": true,
-        "time": "4:10 PM",
-        "enabled": false,
-        "type": "notify"
-    },
-    {
-        "message": "Did you learn Math today?",
-        "repeat": true,
-        "time": "11:00 AM",
-        "enabled": true,
-        "type": "question"
-    },
-    {
-        "message": "Take a BREAK! Stretch your legs and take a walk for 10 minutes!",
-        "repeat": true,
-        "gap": "01:40",
+        "gap": "00:01:00",
         "enabled": true,
         "type": "notify"
     },

@@ -94,6 +94,21 @@ def display_reminder(reminder: dict) -> bool:
     return False
 
 
+def is_in_future(reminder: dict) -> bool:
+    """This function checks if the given reminder is in the future by checking the datetime
+
+    Args:
+        reminder (dict): [description]
+
+    Returns:
+        bool: [description]
+    """
+
+    future: datetime = datetime.now() + timedelta(seconds=10)
+
+    return reminder.get("time", future) > datetime.now() or reminder.get("gap", False)
+
+
 def get_reminders(raw=False) -> dict:
     """This function returns reminders from the JSON file containing reminders
 
@@ -109,7 +124,7 @@ def get_reminders(raw=False) -> dict:
 
         for reminder in load(reminder_file):
             temp = dict_to_reminder(reminder)
-            if temp.get("enabled", False):
+            if temp.get("enabled", False) and is_in_future(reminder):
                 add_reminder_to_dict(reminders, temp)
             elif temp.get("enabled") == None:
                 print(f"[ERROR] a reminder has no attribute \"enabled\"!")
@@ -161,13 +176,24 @@ def add_reminder_to_dict(list_of_reminders: dict, reminder: dict) -> None:
         list_of_reminders[reminder["time"]] = [reminder]
 
 
+def seconds_until_next_reminder(list_of_reminders: dict) -> int:
+    ith_reminder: datetime
+    smallest_reminder: int = 9999999999999999999999
+
+    for ith_reminder in list_of_reminders:
+        difference = (ith_reminder - clean_dt(datetime.now())).seconds
+        if difference < smallest_reminder:
+            smallest_reminder = difference
+
+    return smallest_reminder
+
+
 def start_app():
     """This function controls the reminders using defined functions in this module
     for working with them and displaying them to the users periodically.
     """
 
     list_of_reminders: dict = get_reminders()
-
     while list_of_reminders:
         ctime = clean_dt(datetime.now())
         if list_of_reminders.get(ctime):
@@ -181,10 +207,10 @@ def start_app():
                         update_reminder_file(reminder, toggle=True)
                 else:
                     add_reminder_to_dict(list_of_reminders, reminder)
-        sleep(0.5)
+        else:
+            seconds: int = seconds_until_next_reminder(list_of_reminders)
+            sleep(seconds)
 
 
 if __name__ == "__main__":
-    # print(execute_at_time(datetime.now() +
-    #                       timedelta(seconds=5), ask, "Does it Work?"))
     start_app()
